@@ -7,3 +7,6 @@
   --> starta o container 
 
 - docker stop <containerID/name>
+
+- docker compose up -d 
+  --> cria o container baseado no docker-compose.yml

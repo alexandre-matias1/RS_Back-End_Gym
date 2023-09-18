@@ -1,14 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryUsersRepository } from "@/repositories/in-memory/in-memory-users-repository";
 import { AuthenticateUseCase } from "./authenticate";
 import { hash } from "bcryptjs";
 import { InvalidCredentialsError } from "./errors/invalid-credentials-error";
 
-describe("Authenticate Use Case", () => {
-  it("should be able to authenticate", async () => {
-    const usersRepository = new InMemoryUsersRepository();
-    const sut = new AuthenticateUseCase(usersRepository); // sut --> system under test
+let usersRepository: InMemoryUsersRepository;
+let sut: AuthenticateUseCase; // sut --> system under test
 
+describe("Authenticate Use Case", () => {
+  beforeEach(() => {
+    usersRepository = new InMemoryUsersRepository();
+    sut = new AuthenticateUseCase(usersRepository);
+  });
+  it("should be able to authenticate", async () => {
     await usersRepository.create({
       name: "John Doe",
       email: "john@email.com",
@@ -23,11 +27,8 @@ describe("Authenticate Use Case", () => {
     expect(user.id).toEqual(expect.any(String));
   });
 
-  it("should be able to authenticate with wrong email", async () => {
-    const usersRepository = new InMemoryUsersRepository();
-    const sut = new AuthenticateUseCase(usersRepository); // sut --> system under test
-
-    expect(() =>
+  it("should not be able to authenticate with wrong email", async () => {
+    await expect(() =>
       sut.execute({
         email: "johndoe@example.com",
         password: "123456",
@@ -35,17 +36,14 @@ describe("Authenticate Use Case", () => {
     ).rejects.toBeInstanceOf(InvalidCredentialsError);
   });
 
-  it("should be able to authenticate with wrong email", async () => {
-    const usersRepository = new InMemoryUsersRepository();
-    const sut = new AuthenticateUseCase(usersRepository);
-
+  it("should not be able to authenticate with wrong password", async () => {
     await usersRepository.create({
       name: "John Doe",
       email: "john@email.com",
       password_hash: await hash("123456", 6),
     });
 
-    expect(() =>
+    await expect(() =>
       sut.execute({
         email: "johndoe@example.com",
         password: "123123",
